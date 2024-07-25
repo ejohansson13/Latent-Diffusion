@@ -2,7 +2,7 @@ Stable Diffusion was one of multiple text-to-image generation models to generate
 
 This page will on the text-to-image case, but I urge you to check out the [original paper](https://arxiv.org/pdf/2112.10752.pdf) which described multiple other use cases, including image inpainting, conditioning on semantic maps, and layout-to-image, with image generation conditioned on annotated bounding boxes.
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/LDM_diagram.png" alt="LDM diagram taken from original research paper" width="100%"
+  <img src="/Images/SD_Images/LDM_diagram.png" alt="LDM diagram taken from original research paper" width="100%"
 </p>
 
 # Architecture
@@ -15,7 +15,7 @@ Each of these stages will be covered in more detail below, and I've split the ar
 
 Stable Diffusion models are trained on a wide variety of images pulled from the web. A large dataset of images are pumped in for the network to learn a range of visual themes and configurations. These images are taken apart through a forward process consisting of the time-controlled, sequential addition of Gaussian noise to a training image. Controlling the addition of noise and subsequently instructing the network to remove the added noise teaches the network the probability distribution of removing Gaussian noise to generate a coherent image. The process of generating lucid images from noise is referred to as the reverse diffusion process. Importantly, LDMs were not the first network architecture to operate under the diffusion theory. The idea that models can learn to rebuild images from noise by decomposing training images can be found as early as [2015](https://arxiv.org/pdf/1503.03585.pdf). However, previous architectures operated on the pixel-space of images, rendering them prohibitively expensive for high-resolution image generation and reserving their utility for entities who could accommodate the resource-intensive training process. The distinction of latent diffusion models is autological. Rather than operate on the pixel-space, they first compact each image representation, encoding them to a latent space.
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/LDM_graph.png" alt="Graph demonstrating perceptual vs semantic compression training tradeoff taken from 2022 paper on latent diffusion models" width="50%">
+  <img src="/Images/SD_Images/LDM_graph.png" alt="Graph demonstrating perceptual vs semantic compression training tradeoff taken from 2022 paper on latent diffusion models" width="50%">
 </p>
 
 The above graph demonstrates that the majority of bits constituting a digital image correspond to high-frequency, imperceptible details. In contrast, relatively few bits comprise the semantic information of the image. Unlike previous diffusion models that tried to [jointly balance perceptual and semantic training loss terms](https://arxiv.org/pdf/2106.05931.pdf), latent diffusion models opt for a two-stage approach. Initially, the autoencoder compresses training images, creating a perceptually equivalent, but computationally cheaper latent space for semantic training. Learning the diffusion process is prioritized in the second stage of training. Semantic training freezes the autoencoder weights and masters the reverse diffusion process, learning to construct images from random noise.
@@ -23,7 +23,7 @@ The above graph demonstrates that the majority of bits constituting a digital im
 ### Autoencoder
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/autoencoder_architecture.png" width="70%"></img>
+  <img src="/Images/SD_Images/autoencoder_architecture.png" width="70%"></img>
 </p>
 <p align="center">
   <em>Image taken from Lilian Weng blog: https://lilianweng.github.io/posts/2018-08-12-vae/</em>
@@ -41,7 +41,7 @@ Before explaining the encoder and decoder aspects of the variational auto-encode
 ResNet blocks are residual blocks. Offering a shortcut connection between the input and the propagated signal, they limit each block's responsibility to incremental, residual signal changes. The utility of these blocks and their shortcut connections allow their application in networks of arbitrary depth. Designating two paths for the signal allows the network to determine the relative significance of each path, and weight the correct decision-making path prior to their aggregation. Improved decision-making is compounded by backpropagation. Backpropagation with residual blocks quickly allows larger gradients to flow to earlier layers in the network via the original signal's architectural shortcut. Convolutional kernel weights are dictated by backpropagation, allowing the network to determine the significance of each kernel's contributions. Weights that are deemed unhelpful or unnecessary can be minimized, encouraging the original input to propagate, creating an identity mapping.
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/residual_block_types.png" width="60%"
+  <img src="/Images/SD_Images/residual_block_types.png" width="60%"
 </p>
 <p align="center">
   <em>Image from [2]</em>
@@ -50,14 +50,14 @@ ResNet blocks are residual blocks. Offering a shortcut connection between the in
 These blocks can have multiple compositions. A [follow-up paper in 2016](https://arxiv.org/pdf/1603.05027) by the same authors examined these compositions and their relative performance. They determined the full pre-activation option (e in the above diagram) offered the best performance, supported by two findings. First, identity mapping as the shortcut for the original signal encourages optimization, promoting backpropagation to earlier layers, as described above. This accelerates training in the early stages, as the network quickly adjusts its weights in accordance with feedback. Second, normalization in the pre-activation path mitigates overfitting. Consistent regularization of the propagated signal prevents overt weight adoption of the training data distribution, allowing for successful generalization to novel data. The above ResNet block configuration is utilized in the LDM autoencoder as well, illustrated below. 
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/ResNet_composition.png" width="80%"
+  <img src="/Images/SD_Images/ResNet_composition.png" width="80%"
 </p>
 
 ResNet blocks' success with arbitrarily deep networks defines their success with autoencoders, where network depth is decided by the desired latent space dimensionality. Their ability to combat overfitting and generalize to new data distributions projects well to image compression, where the data distribution encompasses all pixel-space visual configurations. ResNet blocks extract and preserve significant image features with minimal information loss throughout the autoencoder. They also introduce nonlinearity to the model, responsible for modeling the complex relationships and dependencies of image data.
 
 #### Encoder
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/LDM_encoder_architecture.png" alt="Illustration of LDM encoder" width="100%"
+  <img src="/Images/SD_Images/LDM_encoder_architecture.png" alt="Illustration of LDM encoder" width="100%"
 </p>
 
 Constituting the encoder are a mix of ResNet blocks, downsampling, convolution, attention blocks, normalization, and activation functions. [One Stable Diffusion encoder implementation](https://github.com/CompVis/stable-diffusion/tree/main) is illustrated above. Through every step of the encoding operation, the aim is efficient consolidation of image features. Entering the encoder, the image input is convolved with a 3x3 kernel. This convolution broadens the pixel-space RGB image to 128 channels, where pixel-space values are converted to feature embeddings.
@@ -78,7 +78,7 @@ Despite regularization of the latent space through a KL-divergence penalty inten
 
 #### Decoder
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/LDM_decoder_architecture.png" alt="Illustration of LDM decoder" width="100%"
+  <img src="/Images/SD_Images/LDM_decoder_architecture.png" alt="Illustration of LDM decoder" width="100%"
 </p>
 
 The decoder is responsible for reconstructing a pixel-space image from the latent with minimal information loss. Concurrently, it is responsible for reintroducing the high-frequency details abstracted away by the encoder. [One implementation](https://github.com/CompVis/stable-diffusion/blob/main/ldm/modules/diffusionmodules/model.py) is depicted above. The decoder complements the encoder and starts with a similar sequence of operations to the end of the encoder path. Latents are broadened from their minimal dimensionality to image features through an initial convolution. Following the convolution, image features progress through an attention block bookended by ResNet blocks. Repeating their functionality from the encoder path, these blocks offer local and holistic perspectives on the compressed image features, preserving the semantically meaningful image information.
@@ -94,13 +94,13 @@ The architecture presented in the preceding sections was released in 2022, accom
 Two metrics are used to determine the autoencoder's success: perceptual loss and patch-based adversarial loss. 
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/vgg16_architecture.png" alt="Illustration of a VGG16 convolutional neural network" width="55%"
+  <img src="/Images/SD_Images/vgg16_architecture.png" alt="Illustration of a VGG16 convolutional neural network" width="55%"
 </p>
   
 Perceptual loss, or [LPIPS](https://arxiv.org/pdf/1801.03924), measures the semantic understanding of the reconstructed image in comparison to the original. Both the original and reconstructed images are passed through a pre-trained [VGG16](https://arxiv.org/pdf/1409.1556) convolutional neural network. Following the completion of a convolutional layer (sequence of blue rectangles in above diagram, immediately prior to max pooling), the original and reconstructed image's outputs are compared. Each convolutional layer is terminated with a ReLU function, and each image's features are compared here, prior to the subsequent max pooling operation, via mean-squared error (MSE). Five of these locations exist in the VGG16 architecture. The MSE across the five output locations determines the perceptual loss of the reconstructed image. LPIPS is preferred to typical Euclidean-space losses, such as L1 or L2 loss, which depend on pixel-wise comparison. Minimizing the Euclidean distance between two images assumes pixel-wise independence and averages local pixel differences between images, encouraging blurring. The success of the perceptual loss metric can be [dependent on the network](https://arxiv.org/pdf/2302.04032.pdf) employed for semantic comparisons, and [later literature](https://arxiv.org/pdf/2307.01952.pdf) demonstrates a decreased emphasis on perceptual loss.
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/patch_based_adversarial_loss.jpeg" alt="Example of patch-based adversarial loss" width="40%"
+  <img src="/Images/SD_Images/patch_based_adversarial_loss.jpeg" alt="Example of patch-based adversarial loss" width="40%"
 </p>
 
 [Patch-based adversarial loss](https://arxiv.org/pdf/1611.07004.pdf) borrows from GAN theory, introducing controlled patches of noise to reconstructed images while training a discriminator to detect the noisy patches. Introducing localized patches [enforces pixel-space realism](https://arxiv.org/pdf/2012.09841.pdf). Aiding a discriminator in the detection of generated images by introducing scalar patches of noise encourages the decoder to maintain perceptually important high-frequency details while decoding from the latent space. Patch-based loss is not utilized for an initial phase of training (50k or so steps), allowing the autoencoder to establish robustness in its encoding-decoding paradigm. Immediately training with both the perceptual and adversarial losses would lead to an overly powerful discriminator and a weaker autoencoder.
@@ -117,7 +117,7 @@ Schedulers are algorithmic guides to the denoising process implemented through t
 Modifying the ResNet blocks utilized in the autoencoder architecture to be compatible with diffusion is the inclusion of temporal information. Diffusion is measured in timesteps. Additive noise and denoising progress are both measured in timesteps. Timesteps serve as a coefficient, proportionally scaling the quantity of noise to be added or removed from the latent. This information can be linearly transformed to adopt the latent dimensionality and the addition or removal of this quantity is the addition or removal of noise from the latent.
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/ResNet_diffusion_composition.png" width="80%"
+  <img src="/Images/SD_Images/ResNet_diffusion_composition.png" width="80%"
 </p>
 
 A diagram illustrating the incorporation of time into ResNet blocks is given above. The only change is the inclusion of the timestep vector, linearly transformed to be compatible with the latent dimensionality, and added to the latent prior to the second normalization function.
@@ -128,7 +128,7 @@ In the above section, the integration of noise into the U-Net, via timesteps, wa
 These attention blocks’ noteworthy operations are the application of self-attention and cross-attention. Self-attention operates identically to its behavior in the VAE, attending holistically to the latent features and enhancing the network’s understanding. Cross-attention operates as the intersection of conditioning information and the latent. The latent acts as the query vector, with the conditioning taking the role of key and value vectors. 
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/unet_attn_composition.png" width="80%"
+  <img src="/Images/SD_Images/unet_attn_composition.png" width="80%"
 </p>
 
 The architectural implementation of attention blocks aligned with the overall architecture can be seen above. The green arrows between blocks represent natural signal propagation. Blue arrows denote inputs that are summed prior to entering an operation block, while the purple arrows depict the product of the inputs entering the operation block. For example, the output of the self-attention block is added to the output of the 3x3 convolution block before entering the next layer normalization block. The output of the first Linear operation is multiplied by the output of the sequential activation function before being fed into the second Linear operation. Notice the initial input residual has a shortcut to the final output where it is summed with the last convolutional output. This sum is the overall output of each attention block. 
@@ -138,14 +138,14 @@ Despite the tangled illustration, the attention block can be viewed as the decod
 ### U-Net
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/original_unet_architecture.png" alt="Screenshot of U-Net architecture taken from original research paper" width="40%"
+  <img src="/Images/SD_Images/original_unet_architecture.png" alt="Screenshot of U-Net architecture taken from original research paper" width="40%"
 </p>
 
 The U-Net is an encoder-decoder architecture popularized through its performance in computer vision tasks. In LDMs, the U-Net is responsible for repetitive denoising of the latent. Ostensibly, the denoising architecture for LDMs does not have to be a U-Net but, the U-Net’s integration of spatial data via its skip connections lends itself to [an inductive bias](https://arxiv.org/pdf/2105.05233.pdf). The U-Net’s success in preserving and propagating semantic image features while downsampling, prior to conserving the spatial information of said image features while upsampling, explains its utilization in denoising diffusion architectures.
 
 Within LDMs, U-Nets are trained to iteratively denoise a latent. Fed a latent, its conditioning, and the timestep of added noise, the model is judged on its accuracy in estimating the added noise. The added noise is entirely determined by the timestep. Diffusion training begins by randomly sampling a timestep. Assuming 1000 steps of added noise are required to destroy an image to the point of resembling white noise, any step between 1 and 1000 can be sampled. One step of added noise is barely noticeable to the image, while 1000 steps of added noise destroy the image to the point of incoherence. Given the mean and variance of the additive Gaussian noise from the scheduling algorithm, the model uses the randomly sampled timestep as a coefficient to scale the added noise. An example is given below, illustrating the effects of adding 50 and 100 time steps of noise to an image.
 
-<img src="/Stable Diffusion/Images/SD_Images/no_added_noise.png" width="33%" /> <img src="/Stable Diffusion/Images/SD_Images/one_added_noise.png" width="33%" /> <img src="/Stable Diffusion/Images/SD_Images/two_added_noise.png" width="33%" />
+<img src="/Images/SD_Images/no_added_noise.png" width="33%" /> <img src="/Images/SD_Images/one_added_noise.png" width="33%" /> <img src="/Images/SD_Images/two_added_noise.png" width="33%" />
 
 Given the timestep (scale of added noise applied), the model’s responsibility is to estimate the added noise, such that subtracting the model’s estimation from the noisy latent results in the original, clean latent. Taking the example of 50 timesteps of added noise from above, the model attempts to estimate the quantity of added noise. The model’s prediction is then compared to the ground-truth noise level through MSE, with any loss backpropagating and updating network parameters accordingly. This training process is then repeated. Continuing the example from above, 100 timesteps of added noise are fed into the U-Net, the U-Net estimates the added noise level, loss is calculated through MSE, and backpropagation occurs, tuning network parameters for improved noise estimation in the future. The expectation with this training is that the U-Net architecture learns that t timesteps correspond to a quantity n of noise. 
 
@@ -154,7 +154,7 @@ The U-Net’s responsibility during inference is the progressive denoising of a 
 Diffusion training begins with the random drawing of a timestep. A [seminal work on sampling algorithms](https://arxiv.org/pdf/2206.00364) proffered these timesteps should be drawn from a log-normal distribution. Selecting timesteps from this distribution mirrors the loss curve of image generation models in noise level prediction. Estimating added noise at low noise levels requires the network to discern irrelevant distinctions between the original and noisy latents. Estimating added noise at high noise levels is similar to designing a 3 nm transistor using a paper cutout, laser, and magnifying glass, tools that are too cumbersome for their intended purpose. Subtracting two large quantities of noise in the hope of recovering the original signal (clean latent) is an inefficient method of training, a point made in a [video lecture](https://www.youtube.com/watch?v=T0Qxzf0eaio) from one of the paper’s authors explaining the workaround. For exceedingly high noise levels, rather than estimate the magnitude of added noise to the clean latent, the model’s responsibility is to predict the original, clean latent. This is implemented via a switch in the diffusion training architecture, allowing the U-Net to estimate either the quantity of added noise or the original, unperturbed latent. Since the release of the Latent Diffusion Models paper, estimating the clean latent has become the default as [methods to accelerate the generation process are discovered](#contemporary-image-generation-literature).
 
 <p align="center" width="100%">
-  <img src="/Stable Diffusion/Images/SD_Images/unet_architecture.png" width="100%"
+  <img src="/Images/SD_Images/unet_architecture.png" width="100%"
 </p>
 
 Similar to the encoder and decoder from the autoencoder, one architectural implementation for the U-Net in LDMs is illustrated above. ResNet blocks are readily apparent but, the absorption of conditioning information is also critical and performed through the attention blocks described in the preceding section. Throughout the encoder and decoder paths, a pairing of ResNet and attention blocks are a fixture for the progression of the latent. Timesteps denoting the magnitude of noise interact with the U-Net via ResNet blocks, while conditioning is absorbed by the model through the attention blocks. Each ResNet or attention block in their pairings assimilates the scheduling or conditioning information respectively, guiding the U-Net's progression of the latent.
